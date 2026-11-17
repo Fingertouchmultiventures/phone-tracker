@@ -490,7 +490,7 @@ def healthz():
 @app.after_request
 def headers(resp):
     resp.headers["X-Content-Type-Options"] = "nosniff"
-    resp.headers["Referrer-Policy"] = "no-referrer"
+    resp.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     resp.headers["X-Frame-Options"] = "DENY"
     return resp
 

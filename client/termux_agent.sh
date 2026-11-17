@@ -8,8 +8,8 @@
 #   Fill in SERVER and TOKEN below, then:  bash termux_agent.sh
 # For auto-start after reboot, copy this file to ~/.termux/boot/ (see README).
 
-SERVER="https://YOUR-APP.onrender.com"
-TOKEN="PASTE_DEVICE_TOKEN_HERE"
+SERVER="https://phone-tracker-5ig5.onrender.com"
+TOKEN="$(cat "$HOME/.tracker_token" 2>/dev/null || echo PASTE_DEVICE_TOKEN_HERE)"
 INTERVAL=300
 
 termux-wake-lock
@@ -37,7 +37,7 @@ run_commands() {   # reads the server JSON reply on $1
   echo "$reply" | jq -c '.commands[]?' | while read -r c; do
     id=$(echo "$c" | jq -r '.id'); type=$(echo "$c" | jq -r '.type'); payload=$(echo "$c" | jq -r '.payload // ""')
     case "$type" in
-      locate) ack "$id" done "will ping again now"; touch /tmp/.tracker_ping_now ;;
+      locate) ack "$id" done "will ping again now"; touch $HOME/.tracker_ping_now ;;
       message)
         termux-notification --id 9001 --title "Lost phone" --content "$payload" --priority max
         termux-toast "$payload"; ack "$id" done "shown" ;;
@@ -68,6 +68,6 @@ while true; do
     run_commands "$reply"
   fi
 
-  if [ -f /tmp/.tracker_ping_now ]; then rm -f /tmp/.tracker_ping_now; continue; fi
+  if [ -f $HOME/.tracker_ping_now ]; then rm -f $HOME/.tracker_ping_now; continue; fi
   sleep "$INTERVAL"
 done

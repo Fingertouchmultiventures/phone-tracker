@@ -3,8 +3,8 @@
 # Trigger this from Tasker or MacroDroid when a wrong PIN/pattern is entered
 # (event: "Failed Unlock Attempt" / "Device Admin: Login Failed").
 
-SERVER="https://YOUR-APP.onrender.com"
-TOKEN="PASTE_DEVICE_TOKEN_HERE"
+SERVER="https://phone-tracker-5ig5.onrender.com"
+TOKEN="$(cat "$HOME/.tracker_token" 2>/dev/null || echo PASTE_DEVICE_TOKEN_HERE)"
 PHOTO="$HOME/intruder_$(date +%s).jpg"
 
 termux-camera-photo -c 1 "$PHOTO"

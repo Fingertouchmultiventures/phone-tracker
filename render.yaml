@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: phone-tracker
+    runtime: python
+    plan: starter            # a persistent disk needs a paid plan
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 1 --threads 4 --bind 0.0.0.0:$PORT
+    healthCheckPath: /healthz
+    disk:
+      name: tracker-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: DATA_DIR
+        value: /var/data
+      - key: ADMIN_PASSWORD
+        sync: false           # you type it in the Render dashboard
+      - key: SECRET_KEY
+        generateValue: true
+      - key: TZ_NAME
+        value: Africa/Lagos

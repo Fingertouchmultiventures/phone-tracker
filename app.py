@@ -27,7 +27,20 @@ from flask import (Flask, abort, g, jsonify, redirect, render_template_string,
                    request, send_from_directory, session, url_for)
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-DATA_DIR = os.environ.get("DATA_DIR", os.path.join(os.path.dirname(__file__), "data"))
+def _pick_data_dir():
+    """Use DATA_DIR if writable, else fall back to ./data (data is lost on restart
+    when the host has no persistent disk, e.g. Render's free plan)."""
+    wanted = os.environ.get("DATA_DIR") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    for path in (wanted, os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")):
+        try:
+            os.makedirs(os.path.join(path, "photos"), exist_ok=True)
+            return path
+        except OSError:
+            print(f"WARNING: cannot write to {path}", flush=True)
+    raise SystemExit("No writable data directory")
+
+
+DATA_DIR = _pick_data_dir()
 PHOTO_DIR = os.path.join(DATA_DIR, "photos")
 DB_PATH = os.path.join(DATA_DIR, "tracker.db")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
@@ -35,10 +48,10 @@ TZ = ZoneInfo(os.environ.get("TZ_NAME", "Africa/Lagos"))
 COMMAND_TYPES = {"locate", "alarm", "message", "lock"}
 MAX_PHOTO_BYTES = 5 * 1024 * 1024
 
-os.makedirs(PHOTO_DIR, exist_ok=True)
-
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+_sk = os.environ.get("SECRET_KEY", "")
+# Reject obviously weak keys (e.g. the literal "true"); fall back to a random one.
+app.secret_key = _sk if len(_sk) >= 24 else secrets.token_hex(32)
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
